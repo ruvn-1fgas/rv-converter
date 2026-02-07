@@ -1,0 +1,31 @@
+[project]
+name = "rv_converter"
+version = "2026.01.31"
+description = "RV Конвертер JSON -> XLSX"
+authors = [{ name = "Rustam Vanchugov"}]
+readme = "README.md"
+keywords = ["json", "jsonl", "excel", "xlsx", "converter"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pandas",
+    "openpyxl",
+    "tqdm",
+    "numpy",
+]
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+streaming = ["ijson"]
+
+[project.scripts]
+rv_converter = "rv_converter.cli:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

@@ -16,13 +16,13 @@
 ## Установка
 
 ```bash
-pip install rv_converter
+pip install rv_converter@git+https://github.com/ruvn-1fgas/rv-converter.git
 ```
 
 Для потоковой обработки больших JSON-файлов:
 
 ```bash
-pip install rv_converter ijson
+pip install ijson
 ```
 
 ## Использование
