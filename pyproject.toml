@@ -1,0 +1,41 @@
+[project]
+name = "rv-converter"
+version = "2026.02.14.01"
+description = "JSON/JSONL to XLSX converter"
+readme = "README.md"
+authors = [{ name = "Rustam Vanchugov" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+keywords = ["json", "jsonl", "excel", "xlsx", "converter"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pandas",
+    "openpyxl",
+    "tqdm",
+    "numpy",
+]
+
+[project.optional-dependencies]
+streaming = ["ijson"]
+
+[project.scripts]
+rv_converter = "rv_converter.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["rv_converter*"]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/ruvn-1fgas/rv-converter"
+Issues = "https://github.com/ruvn-1fgas/rv-converter/issues"
