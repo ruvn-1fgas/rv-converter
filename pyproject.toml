@@ -1,6 +1,6 @@
 [project]
 name = "rv-converter"
-version = "2026.01.31"
+version = "2026.02.14"
 description = "JSON/JSONL to XLSX converter"
 readme = "README.md"
 authors = [{ name = "Rustam Vanchugov" }]

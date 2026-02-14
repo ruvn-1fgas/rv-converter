@@ -19,6 +19,20 @@
 pip install rv-converter
 ```
 
+### Установка из исходников
+
+```bash
+git clone https://github.com/ruvn-1fgas/rv-converter.git
+cd rv-converter
+pip install .
+```
+
+Или
+
+```bash
+pip install git+https://github.com/ruvn-1fgas/rv-converter.git
+```
+
 Для потоковой обработки больших JSON-файлов:
 
 ```bash
