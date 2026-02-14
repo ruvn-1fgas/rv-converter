@@ -1,4 +1,4 @@
-# JSON -> XLSX Converter
+# JSON -> XLSX Converter (v2026.02.14.01)
 
 Конвертер JSON/JSONL файлов в Excel (XLSX).
 
