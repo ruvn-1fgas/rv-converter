@@ -11,10 +11,10 @@ from rv_converter.constants import EXCEL_MAX_SHEETS
 
 from .i18n import get_i18n
 from .utils import (
-    add_count,
+    add_bold_count,
     add_filters,
+    append_bold_header,
     load_data,
-    make_bold_and_freeze,
     split_data,
     split_dataframe,
     split_dataframe_by_columns,
@@ -122,8 +122,7 @@ class Converter:
             join_multivalued: Разделитель для множественных значений.
             xlsx_metadata: Метаданные для файла.
         """
-        wb = Workbook()
-        wb.remove(wb.active)
+        wb = Workbook(write_only=True)
 
         header_offset = 0
         filter_row, bold_row = 2 + header_offset, 3 + header_offset
@@ -160,6 +159,9 @@ class Converter:
                     wb.save(filename)
                     return
 
+                del df_chunk
+            del data_chunk
+
             sheet_index += 1
 
         if xlsx_metadata:
@@ -193,12 +195,11 @@ class Converter:
         """
         ws = wb.create_sheet(sheet_name)
 
-        add_count(ws, len(df_chunk.columns), len(data_chunk))
+        ws.freeze_panes = "A3"
 
-        ws.append(list(df_chunk.columns))
-
+        add_bold_count(ws, len(df_chunk.columns), len(data_chunk))
+        append_bold_header(df_chunk.columns, ws)
         add_filters(ws, len(df_chunk.columns), filter_row)
-        make_bold_and_freeze(ws, bold_row)
 
         for entry in tqdm(data_chunk, desc=i18n.get("writing_rows_for", sheet_name)):
             ws.append(

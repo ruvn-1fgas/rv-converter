@@ -1,11 +1,12 @@
 import csv
 import json
 import os
+from math import ceil
 from typing import Dict, List, Optional
 
-from math import ceil
 import pandas as pd
 from openpyxl import load_workbook
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Font
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
@@ -23,8 +24,8 @@ except ImportError:
     HAS_IJSON = False
 
 
-def add_count(ws: Worksheet, num_columns: int, num_rows: int) -> None:
-    """Добавляет строку с формулами SUBTOTAL для подсчёта заполненных ячеек.
+def add_bold_count(ws: Worksheet, num_columns: int, num_rows: int) -> None:
+    """Добавляет жирную строку с формулами SUBTOTAL для подсчёта заполненных ячеек.
 
     Использует SUBTOTAL(103, ...) — аналог COUNTA, который игнорирует
     скрытые (отфильтрованные) строки.
@@ -34,30 +35,38 @@ def add_count(ws: Worksheet, num_columns: int, num_rows: int) -> None:
         num_columns: Количество столбцов.
         num_rows: Количество строк данных.
     """
+    bold = Font(bold=True)
+
     data_start_row = 3  # Row 1 = counts, Row 2 = headers, Row 3+ = data
     data_end_row = data_start_row + num_rows - 1
     formulas = []
     for col_idx in range(1, num_columns + 1):
         col_letter = get_column_letter(col_idx)
-        formulas.append(
-            f"=SUBTOTAL(103,{col_letter}{data_start_row}:{col_letter}{data_end_row})"
+        cell = WriteOnlyCell(
+            ws,
+            value=f"=SUBTOTAL(103,{col_letter}{data_start_row}:{col_letter}{data_end_row})",
         )
+        cell.font = bold
+        formulas.append(cell)
+
     ws.append(formulas)
 
 
-def make_bold_and_freeze(ws: Worksheet, row: int) -> None:
-    """Делает заголовки жирными и закрепляет строки выше указанной.
+def append_bold_header(header: list[str], ws: Worksheet) -> None:
+    """Добавляет жирный заголовок к листу Excel.
 
     Args:
-        ws: Лист Excel для форматирования.
-        row: Номер строки, до которой применится форматирование.
+        header: Список заголовков для добавления.
+        ws: Лист Excel для записи заголовков.
     """
-    for cell in ws.iter_rows(min_row=1, max_row=row - 1):
-        for c in cell:
-            c.font = Font(bold=True)
 
-    ws.freeze_panes = ws[f"A{row}"]
-    ws.delete_rows(row)
+    bold = Font(bold=True)
+    cells = []
+    for value in header:
+        cell = WriteOnlyCell(ws, value=value)
+        cell.font = bold
+        cells.append(cell)
+    ws.append(cells)
 
 
 def add_filters(ws: Worksheet, num_columns: int, row: int) -> None:
