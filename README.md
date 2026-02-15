@@ -1,4 +1,4 @@
-# RV Converter (v2026.02.15.2)
+# RV Converter
 
 Универсальный конвертер данных между форматами JSON, JSONL, CSV и XLSX.
 
