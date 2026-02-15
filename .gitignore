@@ -164,3 +164,4 @@ cython_debug/
 #  Development related files
 *.xlsx
 *.json
+test.py

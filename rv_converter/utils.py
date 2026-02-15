@@ -21,14 +21,26 @@ except ImportError:
     HAS_IJSON = False
 
 
-def add_count(ws: Worksheet, count: list[int]) -> None:
-    """Добавляет строку с подсчётом заполненных ячеек в лист Excel.
+def add_count(ws: Worksheet, num_columns: int, num_rows: int) -> None:
+    """Добавляет строку с формулами SUBTOTAL для подсчёта заполненных ячеек.
+
+    Использует SUBTOTAL(103, ...) — аналог COUNTA, который игнорирует
+    скрытые (отфильтрованные) строки.
 
     Args:
         ws: Лист Excel для записи.
-        count: Список значений подсчёта для каждой колонки.
+        num_columns: Количество столбцов.
+        num_rows: Количество строк данных.
     """
-    ws.append(count)
+    data_start_row = 3  # Row 1 = counts, Row 2 = headers, Row 3+ = data
+    data_end_row = data_start_row + num_rows - 1
+    formulas = []
+    for col_idx in range(1, num_columns + 1):
+        col_letter = get_column_letter(col_idx)
+        formulas.append(
+            f"=SUBTOTAL(103,{col_letter}{data_start_row}:{col_letter}{data_end_row})"
+        )
+    ws.append(formulas)
 
 
 def make_bold_and_freeze(ws: Worksheet, row: int) -> None:

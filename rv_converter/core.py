@@ -184,15 +184,7 @@ class Converter:
         """
         ws = wb.create_sheet(sheet_name)
 
-        add_count(
-            ws,
-            [
-                df_chunk[col]
-                .apply(lambda x: x if x not in [None, ""] else None)
-                .count()
-                for col in df_chunk.columns
-            ],
-        )
+        add_count(ws, len(df_chunk.columns), len(data_chunk))
 
         ws.append(list(df_chunk.columns))
 
