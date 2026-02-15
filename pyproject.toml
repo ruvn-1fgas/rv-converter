@@ -1,6 +1,6 @@
 [project]
 name = "rv-converter"
-version = "2026.02.15.2"
+version = "2026.02.15.3"
 description = "Universal data converter between JSON, JSONL, CSV and XLSX formats"
 readme = "README.md"
 authors = [{ name = "Rustam Vanchugov" }]
