@@ -1,6 +1,7 @@
 name: Publish to PyPI & Create Release
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -12,7 +13,7 @@ jobs:
   publish:
     name: Build, Publish & Release
     runs-on: ubuntu-latest
-    if: startsWith(github.event.head_commit.message, 'feat(publish):')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'feat(publish):')
 
     steps:
       - name: Checkout code

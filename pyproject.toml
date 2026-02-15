@@ -1,12 +1,12 @@
 [project]
 name = "rv-converter"
-version = "2026.02.14.01"
-description = "JSON/JSONL to XLSX converter"
+version = "2026.02.15.2"
+description = "Universal data converter between JSON, JSONL, CSV and XLSX formats"
 readme = "README.md"
 authors = [{ name = "Rustam Vanchugov" }]
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
-keywords = ["json", "jsonl", "excel", "xlsx", "converter"]
+keywords = ["json", "jsonl", "csv", "excel", "xlsx", "converter"]
 
 classifiers = [
     "Programming Language :: Python :: 3",

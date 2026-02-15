@@ -1,9 +1,11 @@
+import csv
 import json
 import os
 from typing import Dict, List, Optional
 
 from math import ceil
 import pandas as pd
+from openpyxl import load_workbook
 from openpyxl.styles import Font
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
@@ -69,8 +71,11 @@ def add_filters(ws: Worksheet, num_columns: int, row: int) -> None:
     ws.auto_filter.ref = f"A{row}:{get_column_letter(num_columns)}{row}"
 
 
+SUPPORTED_INPUT_EXTENSIONS = (".json", ".jsonl", ".csv", ".xlsx")
+
+
 def validate_input_file(input_file_path: str) -> bool:
-    """Проверяет существование файла и его расширение (.json или .jsonl).
+    """Проверяет существование файла и его расширение.
 
     Args:
         input_file_path: Путь к файлу для проверки.
@@ -81,8 +86,10 @@ def validate_input_file(input_file_path: str) -> bool:
     if not os.path.isfile(input_file_path):
         print(i18n.get("file_not_exist", input_file_path))
         return False
-    if not (input_file_path.endswith(".json") or input_file_path.endswith(".jsonl")):
-        print(i18n.get("file_not_json", input_file_path))
+
+    ext = os.path.splitext(input_file_path)[1].lower()
+    if ext not in SUPPORTED_INPUT_EXTENSIONS:
+        print(i18n.get("file_not_supported", input_file_path))
         return False
 
     return True
@@ -130,12 +137,79 @@ def read_jsonl_file(input_file_path: str) -> Optional[List[Dict]]:
         return None
 
 
+def read_csv_file(input_file_path: str) -> Optional[List[Dict]]:
+    """Читает CSV-файл и возвращает список словарей.
+
+    Args:
+        input_file_path: Путь к CSV-файлу.
+
+    Returns:
+        Список словарей или None при ошибке.
+    """
+    try:
+        with open(input_file_path, "r", encoding="utf-8") as file:
+            reader = csv.DictReader(file)
+            return list(reader)
+    except Exception as e:
+        print(i18n.get("file_read_error", str(e)))
+        return None
+
+
+def read_xlsx_file(input_file_path: str) -> Optional[List[Dict]]:
+    """Читает XLSX-файл и возвращает список словарей.
+
+    Читает первый лист. Пропускает ведущие строки, где все значения None
+    (например, строки с формулами). Первая непустая строка используется как заголовки.
+
+    Args:
+        input_file_path: Путь к XLSX-файлу.
+
+    Returns:
+        Список словарей или None при ошибке.
+    """
+    try:
+        wb = load_workbook(input_file_path, read_only=True, data_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+        wb.close()
+
+        if not rows:
+            return []
+
+        # Skip leading rows where all values are None (e.g. SUBTOTAL formula rows)
+        header_idx = 0
+        for idx, row in enumerate(rows):
+            if any(v is not None for v in row):
+                header_idx = idx
+                break
+
+        headers = [
+            str(h) if h is not None else f"col_{i}"
+            for i, h in enumerate(rows[header_idx])
+        ]
+        data = []
+        for row in rows[header_idx + 1 :]:
+            entry = {}
+            for key, val in zip(headers, row):
+                entry[key] = val if val is not None else ""
+            data.append(entry)
+        return data
+    except Exception as e:
+        print(i18n.get("file_read_error", str(e)))
+        return None
+
+
 def load_data(filename: str) -> Optional[List[Dict]]:
     if not validate_input_file(filename):
         return None
 
-    if filename.endswith(".jsonl"):
+    ext = os.path.splitext(filename)[1].lower()
+    if ext == ".jsonl":
         return read_jsonl_file(filename)
+    elif ext == ".csv":
+        return read_csv_file(filename)
+    elif ext == ".xlsx":
+        return read_xlsx_file(filename)
     else:
         return read_json_file(filename)
 

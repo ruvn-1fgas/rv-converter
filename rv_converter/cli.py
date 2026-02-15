@@ -32,7 +32,7 @@ def parse_arguments() -> argparse.Namespace:
         "-t",
         "--type",
         help=i18n["type_help"],
-        choices=["xlsx"],
+        choices=["xlsx", "csv", "json", "jsonl"],
         default="xlsx",
     )
 
@@ -55,17 +55,29 @@ def main() -> None:
         print(i18n["error_data_format"])
         sys.exit(1)
 
-    converter.save_file(
-        data,
-        (
-            args.output.rsplit(".", 1)[0] + f".{args.type}"
-            if args.output
-            else args.filename.rsplit(".", 1)[0] + f".{args.type}"
-        ),
-        sort_by=args.sort_by,
-        join_multivalued=args.join_multivalued,
-        type=args.type,
+    output_type = args.type
+    output_file = (
+        args.output.rsplit(".", 1)[0] + f".{output_type}"
+        if args.output
+        else args.filename.rsplit(".", 1)[0] + f".{output_type}"
     )
+
+    if output_type in ("json", "jsonl"):
+        converter.save_file(
+            data,
+            output_file,
+            sort_by=args.sort_by,
+            join_multivalued=args.join_multivalued,
+            type=output_type,
+        )
+    else:
+        converter.save_file(
+            data,
+            output_file,
+            sort_by=args.sort_by,
+            join_multivalued=args.join_multivalued,
+            type=output_type,
+        )
 
 
 if __name__ == "__main__":

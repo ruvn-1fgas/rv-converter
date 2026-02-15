@@ -1,4 +1,6 @@
-from typing import Any, Callable, Dict, List
+import csv
+import json
+from typing import Any, Callable, Dict, List, Optional
 
 from openpyxl import Workbook
 from openpyxl.cell.cell import KNOWN_TYPES
@@ -11,6 +13,7 @@ from .i18n import get_i18n
 from .utils import (
     add_count,
     add_filters,
+    load_data,
     make_bold_and_freeze,
     split_data,
     split_dataframe,
@@ -43,7 +46,7 @@ class Converter:
             xlsx_metadata: Метаданные для Excel-файла, см. openpyxl.packaging.core (DocumentProperties).
         """
 
-        if type not in ["xlsx"]:
+        if type not in ["xlsx", "csv", "json", "jsonl"]:
             raise ValueError(i18n.get("unsupported_file_type", type))
 
         if not data:
@@ -52,7 +55,13 @@ class Converter:
         data = self._apply_filtering(data, filter_function)
         data = self._apply_sorting(data, sort_by)
 
-        if type == "xlsx":
+        if type == "json":
+            self._write_to_json(data, filename)
+        elif type == "jsonl":
+            self._write_to_jsonl(data, filename)
+        elif type == "csv":
+            self._write_to_csv(data, filename, join_multivalued)
+        elif type == "xlsx":
             df = DataFrame(data)
             chunked_dfs = split_dataframe(df)
             chunked_data = split_data(data)
@@ -219,6 +228,118 @@ class Converter:
                 pass
 
         return str(value)
+
+    def _write_to_csv(
+        self,
+        data: List[Dict],
+        filename: str,
+        join_multivalued: str,
+    ) -> None:
+        """Записывает данные в CSV-файл.
+
+        Args:
+            data: Список словарей для записи.
+            filename: Путь к выходному файлу.
+            join_multivalued: Разделитель для множественных значений.
+        """
+        if not data:
+            return
+
+        fieldnames = list(data[0].keys())
+        for entry in data:
+            for key in entry:
+                if key not in fieldnames:
+                    fieldnames.append(key)
+
+        with open(filename, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for entry in tqdm(data, desc=i18n.get("writing_rows_for", filename)):
+                row = {
+                    k: self.serialize_value(v, join_multivalued)
+                    for k, v in entry.items()
+                }
+                writer.writerow(row)
+
+    def convert_file(
+        self,
+        input_file: str,
+        output_file: str,
+        sort_by: Any = None,
+        filter_function: Callable[[Dict], bool] = None,
+        join_multivalued: str = ", ",
+        xlsx_metadata: Dict[str, Any] = None,
+    ) -> None:
+        """Конвертирует файл из одного формата в другой.
+
+        Поддерживаемые входные форматы: json, jsonl, csv, xlsx.
+        Поддерживаемые выходные форматы: xlsx, csv, json, jsonl.
+
+        Args:
+            input_file: Путь ко входному файлу.
+            output_file: Путь к выходному файлу.
+            sort_by: Ключ, список ключей или функция для сортировки.
+            filter_function: Функция фильтрации данных.
+            join_multivalued: Разделитель для объединения множественных значений.
+            xlsx_metadata: Метаданные для Excel-файла.
+        """
+        import os
+
+        data = load_data(input_file)
+        if data is None:
+            raise ValueError(i18n.get("error_data_none"))
+
+        ext = os.path.splitext(output_file)[1].lower()
+        if ext == ".json":
+            data = self._apply_filtering(data, filter_function)
+            data = self._apply_sorting(data, sort_by)
+            self._write_to_json(data, output_file)
+        elif ext == ".jsonl":
+            data = self._apply_filtering(data, filter_function)
+            data = self._apply_sorting(data, sort_by)
+            self._write_to_jsonl(data, output_file)
+        elif ext == ".csv":
+            self.save_file(
+                data,
+                output_file,
+                sort_by=sort_by,
+                filter_function=filter_function,
+                join_multivalued=join_multivalued,
+                type="csv",
+            )
+        elif ext == ".xlsx":
+            self.save_file(
+                data,
+                output_file,
+                sort_by=sort_by,
+                filter_function=filter_function,
+                join_multivalued=join_multivalued,
+                type="xlsx",
+                xlsx_metadata=xlsx_metadata,
+            )
+        else:
+            raise ValueError(i18n.get("unsupported_file_type", ext))
+
+    def _write_to_json(self, data: List[Dict], filename: str) -> None:
+        """Записывает данные в JSON-файл.
+
+        Args:
+            data: Список словарей для записи.
+            filename: Путь к выходному файлу.
+        """
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4, default=str)
+
+    def _write_to_jsonl(self, data: List[Dict], filename: str) -> None:
+        """Записывает данные в JSONL-файл.
+
+        Args:
+            data: Список словарей для записи.
+            filename: Путь к выходному файлу.
+        """
+        with open(filename, "w", encoding="utf-8") as f:
+            for entry in data:
+                f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
 
 
 converter = Converter()
